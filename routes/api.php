@@ -51,9 +51,28 @@ Route::prefix('api')->group(function () {
     Route::post('/register', [ApiRegisterController::class, 'store']);
 
     Route::get('/products', function (Request $request) {
-        return Product::take(10)->orderByDesc('created_at')->get()->toArray();
+        return Product::orderByDesc('created_at')->paginate()->toResourceCollection();
     });
     Route::get('/products/{id}', function (string $id) {
-        return Product::find($id);
+        return Product::find($id)->toResource();
+    });
+
+    Route::prefix('/seller')->group(function () {
+
+        Route::get('/', function () {
+            $sellers = User::isSeller()->get()->toArray();
+
+            return $sellers;
+        });
+
+        Route::get('/{id}', function (string $id) {
+            $seller = User::isSeller()->findOrFail($id);
+
+            return $seller;
+        });
+
+        Route::get('/{id}/products', function (string $id) {
+            return Product::orderByDesc('created_at')->forSeller($id)->paginate()->toResourceCollection();
+        });
     });
 });

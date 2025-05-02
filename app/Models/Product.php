@@ -18,4 +18,10 @@ class Product extends Model
     {
         $query->where('user_id', Auth::id());
     }
+
+    #[Scope]
+    protected function forSeller(Builder $query, string $sellerId)
+    {
+        $query->where('user_id', $sellerId);
+    }
 }
