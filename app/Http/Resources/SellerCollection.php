@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
-class ProductResourceCollection extends ResourceCollection
+class SellerCollection extends ResourceCollection
 {
     /**
      * Transform the resource collection into an array.
@@ -14,11 +14,6 @@ class ProductResourceCollection extends ResourceCollection
      */
     public function toArray(Request $request): array
     {
-        return [
-            'data' => $this->collection,
-            'links' => [
-                'self' => 'link-value',
-            ],
-        ];
+        return parent::toArray($request);
     }
 }

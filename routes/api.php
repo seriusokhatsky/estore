@@ -2,7 +2,13 @@
 
 use App\Http\Controllers\Auth\ApiAuthController;
 use App\Http\Controllers\Auth\ApiRegisterController;
+use App\Http\Controllers\Orders\OrdersController;
 use App\Http\Controllers\Products\ProductsController;
+use App\Http\Resources\OrderCollection;
+use App\Http\Resources\ProductCollection;
+use App\Http\Resources\SellerCollection;
+use App\Http\Resources\SellerResource;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
@@ -14,34 +20,8 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/api/login', [ApiAuthController::class, 'login']);
 
-Route::prefix('api')
-    ->middleware('auth:sanctum')
-    ->group(function () {
-        Route::get('/users', function() {
-            return User::take(10)->orderByDesc('created_at')->get()->toArray();
-        });
-
-        Route::get('/logout', [ApiAuthController::class, 'logout']);
-
-        // Route::get('/test', function (Request $request): array {
-        //     $users = User::take(1)
-        //         ->get()
-        //         ->toArray();
-
-        //     return $users;
-        // });
-
-        // Route::apiResource('products', ProductsController::class)->middleware('role:seller');
-
-        // Route::post('/register', [ApiRegisterController::class, 'store']);
-    });
-
-
 Route::prefix('api')->group(function () {
-    Route::prefix('seller')->middleware('auth:sanctum')->group(function () {
-        Route::get('/users', function () {
-            return User::take(10)->orderByDesc('created_at')->get()->toArray();
-        });
+    Route::prefix('seller.dashboard')->middleware('auth:sanctum')->group(function () {
 
         Route::get('/logout', [ApiAuthController::class, 'logout']);
 
@@ -60,19 +40,32 @@ Route::prefix('api')->group(function () {
     Route::prefix('/seller')->group(function () {
 
         Route::get('/', function () {
-            $sellers = User::isSeller()->get()->toArray();
-
-            return $sellers;
+            return new SellerCollection(User::isSeller()->get());
         });
 
         Route::get('/{id}', function (string $id) {
-            $seller = User::isSeller()->findOrFail($id);
-
-            return $seller;
+            return new SellerResource(
+                User::isSeller()->findOrFail($id)
+            );
         });
 
         Route::get('/{id}/products', function (string $id) {
-            return Product::orderByDesc('created_at')->forSeller($id)->paginate()->toResourceCollection();
+            return new ProductCollection(User::isSeller()->findOrFail($id)->products()->orderByDesc('created_at')->paginate());
+        });
+
+        Route::get('/products/{id}', function ($id) {
+            return Product::findOrFail($id)->user;
+        });
+    });
+
+    Route::prefix('/orders')->group(function () {
+        Route::get('/', function () {
+            return Order::all()->toResourceCollection();
+        });
+        Route::post('/', [OrdersController::class, 'store']);
+
+        Route::get('/{id}', function ($id) {
+            return Order::findOrFail($id)->toResource();
         });
     });
 });
