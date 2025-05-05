@@ -2,9 +2,10 @@
 
 use App\Http\Controllers\Auth\ApiAuthController;
 use App\Http\Controllers\Auth\ApiRegisterController;
-use App\Http\Controllers\Orders\OrdersController;
 use App\Http\Controllers\Products\ProductsController;
-use App\Http\Resources\OrderCollection;
+use App\Http\Controllers\Admin\OrdersController as AdminOrdersController;
+use App\Http\Controllers\Buyer\OrdersController as BuyerOrdersController;
+use App\Http\Controllers\Seller\OrdersController as SellerOrdersController;
 use App\Http\Resources\ProductCollection;
 use App\Http\Resources\SellerCollection;
 use App\Http\Resources\SellerResource;
@@ -22,6 +23,8 @@ Route::prefix('api')->group(function () {
     Route::post('/login', [ApiAuthController::class, 'login']);
     Route::post('/register', [ApiRegisterController::class, 'store']);
 
+    Route::get('/admin/orders', [AdminOrdersController::class, 'index']);
+
     Route::get('/users', function () {
         return User::all()->toArray();
     });
@@ -33,19 +36,14 @@ Route::prefix('api')->group(function () {
         Route::apiResource('products', ProductsController::class);
 
         Route::prefix('/orders')->group(function () {
-            Route::get('/', function (Request $request) {
-                return $request->user()->orders;
-            });
-            Route::post('/', [OrdersController::class, 'store']);
-
-            Route::get('/{id}', function ($id) {
-                return Order::findOrFail($id)->toResource();
-            });
+            Route::get('/', [SellerOrdersController::class, 'index']);
+            Route::get('/{id}', [SellerOrdersController::class, 'show']);
         });
     });
 
     Route::prefix('/orders')->middleware(['auth:sanctum'])->group(function () {
-        Route::post('/', [OrdersController::class, 'store']);
+        Route::get('/', [BuyerOrdersController::class, 'index']);
+        Route::post('/', [BuyerOrdersController::class, 'store']);
     });
 
     Route::get('/products', function (Request $request) {
