@@ -18,17 +18,35 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/api/login', [ApiAuthController::class, 'login']);
-
 Route::prefix('api')->group(function () {
-    Route::prefix('seller.dashboard')->middleware('auth:sanctum')->group(function () {
+    Route::post('/login', [ApiAuthController::class, 'login']);
+    Route::post('/register', [ApiRegisterController::class, 'store']);
+
+    Route::get('/users', function () {
+        return User::all()->toArray();
+    });
+
+    Route::prefix('seller.dashboard')->middleware(['auth:sanctum', 'role:seller'])->group(function () {
 
         Route::get('/logout', [ApiAuthController::class, 'logout']);
 
-        Route::apiResource('products', ProductsController::class)->middleware('role:seller');
+        Route::apiResource('products', ProductsController::class);
+
+        Route::prefix('/orders')->group(function () {
+            Route::get('/', function (Request $request) {
+                return $request->user()->orders;
+            });
+            Route::post('/', [OrdersController::class, 'store']);
+
+            Route::get('/{id}', function ($id) {
+                return Order::findOrFail($id)->toResource();
+            });
+        });
     });
 
-    Route::post('/register', [ApiRegisterController::class, 'store']);
+    Route::prefix('/orders')->middleware(['auth:sanctum'])->group(function () {
+        Route::post('/', [OrdersController::class, 'store']);
+    });
 
     Route::get('/products', function (Request $request) {
         return Product::orderByDesc('created_at')->paginate()->toResourceCollection();
@@ -55,17 +73,6 @@ Route::prefix('api')->group(function () {
 
         Route::get('/products/{id}', function ($id) {
             return Product::findOrFail($id)->user;
-        });
-    });
-
-    Route::prefix('/orders')->group(function () {
-        Route::get('/', function () {
-            return Order::all()->toResourceCollection();
-        });
-        Route::post('/', [OrdersController::class, 'store']);
-
-        Route::get('/{id}', function ($id) {
-            return Order::findOrFail($id)->toResource();
         });
     });
 });
