@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Product;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class User extends Authenticatable
 {
@@ -57,9 +58,17 @@ class User extends Authenticatable
         return $this->hasMany(Product::class);
     }
 
-    public function orders(): HasMany
+    public function buyerOrders(): HasMany
     {
-        return $this->hasMany(Order::class);
+        return $this->hasMany(Order::class, 'user_id');
+    }
+
+    public function sellerOrders(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Order::class,
+            Product::class
+        );
     }
 
     #[Scope]

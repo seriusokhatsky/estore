@@ -11,6 +11,7 @@ class Product extends Model
     protected $fillable = ['name', 'description', 'price', 'file', 'user_id'];
     //
 
+    // Product is attached to sellers.
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

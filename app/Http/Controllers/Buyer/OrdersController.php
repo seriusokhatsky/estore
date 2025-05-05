@@ -1,15 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\Orders;
+namespace App\Http\Controllers\Buyer;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class OrdersController extends Controller
 {
+    public function index(Request $request)
+    {
+        return $request->user()->buyerOrders()->get();
+    }
     /**
      * Store a newly created resource in storage.
      */

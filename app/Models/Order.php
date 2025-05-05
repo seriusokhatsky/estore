@@ -12,9 +12,9 @@ class Order extends Model
 {
     public $fillable = ['product_id', 'user_id', 'status', 'payment_status'];
 
-    public function user(): BelongsTo
+    public function buyer(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function product(): HasOne
