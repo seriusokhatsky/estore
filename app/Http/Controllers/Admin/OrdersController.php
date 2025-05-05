@@ -24,4 +24,12 @@ class OrdersController extends Controller
         }
         return $orders->get()->toArray();
     }
+
+    /**
+    * Remove the specified resource from storage.
+    */
+    public function destroy(Order $order)
+    {
+        return $order->delete();
+    }
 }

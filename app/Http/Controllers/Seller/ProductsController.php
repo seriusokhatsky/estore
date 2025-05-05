@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Products;
+namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
@@ -13,15 +13,10 @@ class ProductsController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Product::take(10)
-            ->forCurrentSeller()
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->toArray();
+        return $request->user()->products;
     }
-
     /**
      * Store a newly created resource in storage.
      */
@@ -48,9 +43,9 @@ class ProductsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-        return Product::forCurrentSeller()->findOrFail($id);
+        return $request->user()->products()->findOrFail($id);
     }
 
     /**
@@ -59,7 +54,7 @@ class ProductsController extends Controller
     public function update(Request $request, string $id)
     {
 
-        $product = Product::forCurrentSeller()->findOrFail($id);
+        $product = $request->user()->products()->findOrFail($id);
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
@@ -76,8 +71,9 @@ class ProductsController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Product $product)
+    public function destroy(Request $request, int $id)
     {
+        $product = $request->user()->products()->findOrFail($id);
         return $product->delete();
     }
 }
