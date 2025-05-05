@@ -18,59 +18,57 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::prefix('api')->group(function () {
-    Route::post('/login', [ApiAuthController::class, 'login']);
-    Route::post('/register', [ApiRegisterController::class, 'store']);
+Route::get('/users', function () {
+    return User::all()->toArray();
+});
 
-    Route::get('/admin/orders', [AdminOrdersController::class, 'index']);
-    Route::delete('/admin/orders/{order}', [AdminOrdersController::class, 'destroy']);
+Route::post('/login', [ApiAuthController::class, 'login']);
+Route::post('/register', [ApiRegisterController::class, 'store']);
 
-    Route::get('/users', function () {
-        return User::all()->toArray();
+Route::get('/admin/orders', [AdminOrdersController::class, 'index']);
+Route::delete('/admin/orders/{order}', [AdminOrdersController::class, 'destroy']);
+
+Route::prefix('seller.dashboard')->middleware(['auth:sanctum', 'role:seller'])->group(function () {
+
+    Route::get('/logout', [ApiAuthController::class, 'logout']);
+
+    Route::apiResource('products', SellerProductsController::class);
+
+    Route::prefix('/orders')->group(function () {
+        Route::get('/', [SellerOrdersController::class, 'index']);
+        Route::get('/{id}', [SellerOrdersController::class, 'show']);
+    });
+});
+
+Route::prefix('/orders')->middleware(['auth:sanctum'])->group(function () {
+    Route::get('/', [BuyerOrdersController::class, 'index']);
+    Route::post('/', [BuyerOrdersController::class, 'store']);
+});
+
+Route::get('/products', function (Request $request) {
+    return Product::orderByDesc('created_at')->paginate()->toResourceCollection();
+});
+Route::get('/products/{id}', function (string $id) {
+    return Product::find($id)->toResource();
+});
+
+Route::prefix('/seller')->group(function () {
+
+    Route::get('/', function () {
+        return new SellerCollection(User::isSeller()->get());
     });
 
-    Route::prefix('seller.dashboard')->middleware(['auth:sanctum', 'role:seller'])->group(function () {
-
-        Route::get('/logout', [ApiAuthController::class, 'logout']);
-
-        Route::apiResource('products', SellerProductsController::class);
-
-        Route::prefix('/orders')->group(function () {
-            Route::get('/', [SellerOrdersController::class, 'index']);
-            Route::get('/{id}', [SellerOrdersController::class, 'show']);
-        });
+    Route::get('/{id}', function (string $id) {
+        return new SellerResource(
+            User::isSeller()->findOrFail($id)
+        );
     });
 
-    Route::prefix('/orders')->middleware(['auth:sanctum'])->group(function () {
-        Route::get('/', [BuyerOrdersController::class, 'index']);
-        Route::post('/', [BuyerOrdersController::class, 'store']);
+    Route::get('/{id}/products', function (string $id) {
+        return new ProductCollection(User::isSeller()->findOrFail($id)->products()->orderByDesc('created_at')->paginate());
     });
 
-    Route::get('/products', function (Request $request) {
-        return Product::orderByDesc('created_at')->paginate()->toResourceCollection();
-    });
-    Route::get('/products/{id}', function (string $id) {
-        return Product::find($id)->toResource();
-    });
-
-    Route::prefix('/seller')->group(function () {
-
-        Route::get('/', function () {
-            return new SellerCollection(User::isSeller()->get());
-        });
-
-        Route::get('/{id}', function (string $id) {
-            return new SellerResource(
-                User::isSeller()->findOrFail($id)
-            );
-        });
-
-        Route::get('/{id}/products', function (string $id) {
-            return new ProductCollection(User::isSeller()->findOrFail($id)->products()->orderByDesc('created_at')->paginate());
-        });
-
-        Route::get('/products/{id}', function ($id) {
-            return Product::findOrFail($id)->user;
-        });
+    Route::get('/products/{id}', function ($id) {
+        return Product::findOrFail($id)->user;
     });
 });
