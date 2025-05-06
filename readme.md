@@ -15,3 +15,15 @@ docker run --name pgadmin \
   -p 5051:80 \
   -v pgadmin-data:/var/lib/pgadmin \
   -d dpage/pgadmin4
+
+docker run --name redis-db \
+  --network postgres-network \
+  -p 6379:6379 \
+  -v redis-data:/data \
+  -d redis:latest
+
+docker run --name redis-commander \
+  --network postgres-network \
+  -p 8081:8081 \
+  -e REDIS_HOSTS=default:redis-db:6379 \
+  -d rediscommander/redis-commander:latest
