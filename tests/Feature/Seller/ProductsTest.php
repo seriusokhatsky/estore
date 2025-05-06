@@ -68,6 +68,7 @@ class ProductsTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSeeText('1');
+
     }
 
     public function test_can_get_single(): void

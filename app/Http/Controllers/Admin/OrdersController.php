@@ -6,11 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\User;
+
 class OrdersController extends Controller
 {
     public function index(Request $request)
     {
-        $orders = Order::take(100)->orderByDesc('created_at');
+        $orders = Order::take(20)->orderByDesc('created_at');
         if ($request->has('buyer_id')) {
             $buyerId = $request->buyer_id;
             $orders = User::findOrFail($buyerId)->buyerOrders();

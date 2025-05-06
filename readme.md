@@ -21,9 +21,3 @@ docker run --name redis-db \
   -p 6379:6379 \
   -v redis-data:/data \
   -d redis:latest
-
-docker run --name redis-commander \
-  --network postgres-network \
-  -p 8081:8081 \
-  -e REDIS_HOSTS=default:redis-db:6379 \
-  -d rediscommander/redis-commander:latest

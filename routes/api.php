@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use App\Models\Product;
+use Illuminate\Support\Facades\Redis;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -25,8 +26,12 @@ Route::get('/users', function () {
 Route::post('/login', [ApiAuthController::class, 'login']);
 Route::post('/register', [ApiRegisterController::class, 'store']);
 
-Route::get('/admin/orders', [AdminOrdersController::class, 'index']);
-Route::delete('/admin/orders/{order}', [AdminOrdersController::class, 'destroy']);
+
+
+Route::prefix('/admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/orders', [AdminOrdersController::class, 'index']);
+    Route::delete('/orders/{order}', [AdminOrdersController::class, 'destroy']);
+});
 
 Route::prefix('seller.dashboard')->middleware(['auth:sanctum', 'role:seller'])->group(function () {
 
