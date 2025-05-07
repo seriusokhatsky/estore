@@ -20,9 +20,9 @@ class Order extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function product(): HasOne
+    public function product(): BelongsTo
     {
-        return $this->hasOne(Product::class);
+        return $this->belongsTo(Product::class);
     }
 
     public function payment(): HasOne

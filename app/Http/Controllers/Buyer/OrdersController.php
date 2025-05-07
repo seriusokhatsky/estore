@@ -11,7 +11,7 @@ class OrdersController extends Controller
 {
     public function index(Request $request)
     {
-        return $request->user()->buyerOrders()->get();
+        return $request->user()->buyerOrders()->get()->toResourceCollection();
     }
     /**
      * Store a newly created resource in storage.

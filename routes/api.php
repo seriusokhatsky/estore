@@ -5,7 +5,9 @@ use App\Http\Controllers\Auth\ApiRegisterController;
 use App\Http\Controllers\Seller\ProductsController as SellerProductsController;
 use App\Http\Controllers\Admin\OrdersController as AdminOrdersController;
 use App\Http\Controllers\Buyer\OrdersController as BuyerOrdersController;
+use App\Http\Controllers\Buyer\PaymentController as BuyerPaymentController;
 use App\Http\Controllers\Seller\OrdersController as SellerOrdersController;
+use App\Http\Controllers\WebhookController;
 use App\Http\Resources\ProductCollection;
 use App\Http\Resources\SellerCollection;
 use App\Http\Resources\SellerResource;
@@ -49,6 +51,10 @@ Route::prefix('/orders')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/', [BuyerOrdersController::class, 'store']);
 });
 
+Route::prefix('/payments')->middleware(['auth:sanctum'])->group(function () {
+    Route::post('/', [BuyerPaymentController::class, 'store']);
+});
+
 Route::get('/products', function (Request $request) {
     return Product::orderByDesc('created_at')->paginate()->toResourceCollection();
 });
@@ -75,4 +81,8 @@ Route::prefix('/seller')->group(function () {
     Route::get('/products/{id}', function ($id) {
         return Product::findOrFail($id)->user;
     });
+});
+
+Route::prefix('/webhooks')->group(function () {
+    Route::patch('/payment', [WebhookController::class, 'handlePaymentWebhook']);
 });
