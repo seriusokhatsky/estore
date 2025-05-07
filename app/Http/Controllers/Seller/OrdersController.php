@@ -11,19 +11,21 @@ class OrdersController extends Controller
 {
     public function index(Request $request)
     {
-        $sellerOrders = $request->user()->sellerOrders();
-        if ($request->has('buyer_id')) {
-            $sellerOrders->where('orders.user_id', '=', (int) $request->buyer_id);
-        }
-        if ($request->has('product_id')) {
-            $sellerOrders->where('orders.product_id', '=', (int) $request->product_id);
-        }
-        return $sellerOrders->get();
+        return $request->user()
+            ->sellerOrders()
+            ->when($request->has('buyer_id'), function ($query) use ($request) {
+                return $query->where('orders.user_id', '=', (int) $request->buyer_id);
+            })
+            ->when($request->has('product_id'), function ($query) use ($request) {
+                return $query->where('orders.product_id', '=', (int) $request->product_id);
+            })
+            ->get();
     }
 
     public function show(Request $request, int $id)
     {
-        $sellerOrders = $request->user()->sellerOrders();
-        return $sellerOrders->findOrFail($id);
+        return $request->user()
+            ->sellerOrders()
+            ->findOrFail($id);
     }
 }

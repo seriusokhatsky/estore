@@ -45,5 +45,8 @@ class AuthTest extends TestCase
         $response = $this->getJson('/api/seller.dashboard/products');
 
         $response->assertStatus(403);
+        $response->assertJson([
+            'message' => 'Unauthorized action.'
+        ]);
     }
 } 

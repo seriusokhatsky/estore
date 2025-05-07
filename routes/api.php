@@ -26,11 +26,10 @@ Route::get('/users', function () {
 Route::post('/login', [ApiAuthController::class, 'login']);
 Route::post('/register', [ApiRegisterController::class, 'store']);
 
-
-
 Route::prefix('/admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/orders', [AdminOrdersController::class, 'index']);
     Route::delete('/orders/{order}', [AdminOrdersController::class, 'destroy']);
+    Route::patch('/orders/{order}/status', [AdminOrdersController::class, 'updateStatus']);
 });
 
 Route::prefix('seller.dashboard')->middleware(['auth:sanctum', 'role:seller'])->group(function () {

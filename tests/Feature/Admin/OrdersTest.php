@@ -9,7 +9,7 @@ use App\Models\User;
 use App\Models\Order;
 
 class OrdersTest extends TestCase
-{    
+{
     use RefreshDatabase;
 
     protected $user;
@@ -46,5 +46,45 @@ class OrdersTest extends TestCase
         $response->assertStatus(200);
         $response->assertSeeText('1');
         $this->assertDatabaseMissing('orders', ['id' => 1]);
+    }
+
+    public function test_admin_can_update_order_status(): void
+    {
+        $order = Order::factory()->create(['status' => 'pending']);
+
+        $response = $this->patchJson("/api/admin/orders/{$order->id}/status", [
+            'status' => 'processing'
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'message' => 'Order status updated successfully',
+                'order' => [
+                    'id' => $order->id,
+                    'status' => 'processing'
+                ]
+            ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'processing'
+        ]);
+    }
+
+    public function test_admin_cannot_update_order_with_invalid_status(): void
+    {
+        $order = Order::factory()->create(['status' => 'pending']);
+
+        $response = $this->patchJson("/api/admin/orders/{$order->id}/status", [
+            'status' => 'invalid_status'
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['status']);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'pending'
+        ]);
     }
 }
