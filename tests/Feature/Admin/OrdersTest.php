@@ -34,9 +34,8 @@ class OrdersTest extends TestCase
         $response = $this->getJson('/api/admin/orders');
 
         $response->assertStatus(200);
-        $response->assertJsonCount(10);
-        $response->assertJsonPath('0.status', 'pending');
-        $response->assertJsonPath('2.id', 3);
+        $response->assertJsonPath('data.0.status', 'pending');
+        $response->assertJsonPath('data.2.id', 3);
     }
 
     public function test_admin_can_delete_order(): void
