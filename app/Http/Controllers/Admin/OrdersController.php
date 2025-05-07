@@ -24,7 +24,7 @@ class OrdersController extends Controller
                 return $query->where('orders.product_id', '=', (int) $request->product_id);
             })
             ->get()
-            ->toArray();
+            ->toResourceCollection();
     }
 
     /**
