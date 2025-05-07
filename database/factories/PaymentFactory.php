@@ -2,14 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\Order;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use App\Models\User;
-use App\Models\Product;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Order>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Payment>
  */
-class OrderFactory extends Factory
+class PaymentFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -19,9 +18,8 @@ class OrderFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
-            'product_id' => Product::factory(),
-            'status' => 'pending'
+            'order_id' => Order::factory(),
+            'status' => 'pending',
         ];
     }
 }

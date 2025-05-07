@@ -25,7 +25,6 @@ class OrdersController extends Controller
         $order = Order::create([
             'product_id' => $request->product_id,
             'status' => 'new',
-            'payment_status' => 'pending',
             'user_id' => Auth::id()
         ]);
 

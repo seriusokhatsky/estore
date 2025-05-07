@@ -13,7 +13,7 @@ class Order extends Model
 {
     use HasFactory;
 
-    public $fillable = ['product_id', 'user_id', 'status', 'payment_status'];
+    public $fillable = ['product_id', 'user_id', 'status'];
 
     public function buyer(): BelongsTo
     {
