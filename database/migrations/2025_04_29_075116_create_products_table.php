@@ -17,6 +17,7 @@ return new class extends Migration
             $table->text('description');
             $table->double('price');
             $table->string('file', 255);
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

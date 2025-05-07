@@ -21,7 +21,7 @@ class ProductFactory extends Factory
             'name' => fake()->name(),
             'description' => fake()->text(200),
             'price' => fake()->randomFloat(2, 10, 300),
-            'file' => fake()->text(10) . '.pdf',
+            'file' => fake()->text(10) . 'pdf',
             'user_id' => User::factory()
 
         ];
