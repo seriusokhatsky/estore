@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Buyer;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
+use Illuminate\Database\Query\Processors\Processor;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -27,7 +28,9 @@ class PaymentController extends Controller
             // 'payment_method' => 'required|string|in:credit_card,paypal,bank_transfer'
         ]);
 
-        $orderProduct = $request->user()->buyerOrders()->findOrFail($request->order_id)->product;
+        $order = $request->user()->buyerOrders()->findOrFail($request->order_id);
+
+        $orderProduct = $order->product;
 
         $payment = Payment::create([
             'order_id' => $request->order_id,

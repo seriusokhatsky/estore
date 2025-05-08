@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Jobs\ProcessOrder;
 
 class WebhookController extends Controller
 {
@@ -23,15 +24,17 @@ class WebhookController extends Controller
                 'required',
                 'string',
                 'in:failed,paid',
-                Rule::prohibitedIf(function () use ($request) {
-                    $payment = Payment::find($request->payment_id);
-                    return $payment && $payment->status === 'paid';
-                })
+                // Rule::prohibitedIf(function () use ($request) {
+                //     $payment = Payment::find($request->payment_id);
+                //     return $payment && $payment->status === 'paid';
+                // })
             ],
         ]);
 
         $payment = Payment::find($request->payment_id);
         $payment->update(['status' => $request->status]);
+
+        ProcessOrder::dispatch($payment->order);
 
         return response()->json(['message' => 'Payment status processed']);
     }
