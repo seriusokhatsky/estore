@@ -132,7 +132,7 @@ class SellerTest extends TestCase
                 'price' => 99.99
             ]);
 
-        $response = $this->getJson('/api/products/' . $product->id);
+        $response = $this->getJson('/api/seller/products/' . $product->id);
 
         $response->assertStatus(200)
             ->assertJson([

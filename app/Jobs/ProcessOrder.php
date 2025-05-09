@@ -29,7 +29,7 @@ class ProcessOrder implements ShouldQueue
     public function handle(): void
     {
         sleep(3);
-        Log::notice('Runned job11', $this->order->toArray());
-        Mail::to('seriu.1995@gmail.com')->send(new OrderPaid($this->order));
+        Log::info('Processing order', $this->order->toArray());
+        Mail::to($this->order->buyer->email)->send(new OrderPaid($this->order));
     }
 }

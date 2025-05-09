@@ -17,8 +17,9 @@ class OrderPaid extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(Order $order)
-    {
+    public function __construct(
+        public Order $order
+    ) {
         //
     }
 
@@ -28,7 +29,7 @@ class OrderPaid extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Order Paid',
+            subject: 'Order #' . $this->order->id . ' has been paid',
         );
     }
 

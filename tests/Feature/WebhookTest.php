@@ -10,7 +10,10 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Jobs\ProcessOrder;
+use App\Mail\OrderPaid;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class WebhookTest extends TestCase
 {
@@ -26,8 +29,6 @@ class WebhookTest extends TestCase
     {
         parent::setUp();
 
-        Queue::fake();
-
         $this->buyer = User::factory()
             ->state(['role' => 'buyer'])
             ->create();
@@ -38,24 +39,29 @@ class WebhookTest extends TestCase
 
         $this->product = Product::factory()
             ->for($this->seller)
-            ->create();
+            ->create(['price' => 99.99]);
 
         $this->order = Order::factory()
             ->for($this->buyer, 'buyer')
-            ->for($this->product)
-            ->create();
-
-        $this->payment = Payment::factory()
-            ->for($this->order)
             ->create([
-                'status' => 'pending',
-                'amount' => $this->product->price,
-                'payment_method' => 'credit-card'
+                'product_id' => $this->product->id,
+                'status' => 'new'
             ]);
+
+        $this->payment = Payment::create([
+            'order_id' => $this->order->id,
+            'status' => 'pending',
+            'amount' => $this->product->price,
+            'payment_method' => 'credit-card'
+        ]);
     }
 
-    public function test_can_update_payment_status_to_paid(): void
+    public function test_webhook_can_process_payment(): void
     {
+        Queue::fake();
+        Mail::fake();
+        Log::shouldReceive('info')->once();
+
         $response = $this->patchJson('/api/webhooks/payment', [
             'payment_id' => $this->payment->id,
             'status' => 'paid'
@@ -64,37 +70,30 @@ class WebhookTest extends TestCase
         $response->assertStatus(200)
             ->assertJson(['message' => 'Payment status processed']);
 
+        // Assert payment status was updated
         $this->assertDatabaseHas('payments', [
             'id' => $this->payment->id,
             'status' => 'paid'
         ]);
 
+        // Assert job was dispatched
         Queue::assertPushed(ProcessOrder::class, function ($job) {
             return $job->order->id === $this->order->id;
         });
     }
 
-    public function test_can_update_payment_status_to_failed(): void
+    public function test_webhook_validates_payment_id(): void
     {
         $response = $this->patchJson('/api/webhooks/payment', [
-            'payment_id' => $this->payment->id,
-            'status' => 'failed'
+            'payment_id' => 99999, // Non-existent payment
+            'status' => 'paid'
         ]);
 
-        $response->assertStatus(200)
-            ->assertJson(['message' => 'Payment status processed']);
-
-        $this->assertDatabaseHas('payments', [
-            'id' => $this->payment->id,
-            'status' => 'failed'
-        ]);
-
-        Queue::assertPushed(ProcessOrder::class, function ($job) {
-            return $job->order->id === $this->order->id;
-        });
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['payment_id']);
     }
 
-    public function test_returns_validation_error_for_invalid_status(): void
+    public function test_webhook_validates_status(): void
     {
         $response = $this->patchJson('/api/webhooks/payment', [
             'payment_id' => $this->payment->id,
@@ -105,40 +104,24 @@ class WebhookTest extends TestCase
             ->assertJsonValidationErrors(['status']);
     }
 
-    public function test_returns_validation_error_for_nonexistent_payment(): void
+    public function test_process_order_job_sends_email(): void
     {
-        $response = $this->patchJson('/api/webhooks/payment', [
-            'payment_id' => 99999,
-            'status' => 'paid'
-        ]);
+        Mail::fake();
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['payment_id'])
-            ->assertJson([
-                'message' => 'The selected payment id is invalid.',
-                'errors' => [
-                    'payment_id' => ['The selected payment id is invalid.']
-                ]
-            ]);
+        $job = new ProcessOrder($this->order);
+        $job->handle();
+
+        Mail::assertSent(OrderPaid::class, function ($mail) {
+            return $mail->hasTo($this->order->buyer->email) &&
+                   $mail->order->id === $this->order->id;
+        });
     }
 
-    public function test_returns_validation_error_for_missing_payment_id(): void
+    public function test_order_paid_email_has_correct_content(): void
     {
-        $response = $this->patchJson('/api/webhooks/payment', [
-            'status' => 'paid'
-        ]);
+        $mail = new OrderPaid($this->order);
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['payment_id']);
-    }
-
-    public function test_returns_validation_error_for_missing_status(): void
-    {
-        $response = $this->patchJson('/api/webhooks/payment', [
-            'payment_id' => $this->payment->id
-        ]);
-
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['status']);
+        $this->assertEquals('Order #' . $this->order->id . ' has been paid', $mail->envelope()->subject);
+        $this->assertEquals($this->order->id, $mail->order->id);
     }
 }

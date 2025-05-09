@@ -6,6 +6,7 @@ use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Jobs\ProcessOrder;
+use Illuminate\Support\Facades\Log;
 
 class WebhookController extends Controller
 {
@@ -33,6 +34,8 @@ class WebhookController extends Controller
 
         $payment = Payment::find($request->payment_id);
         $payment->update(['status' => $request->status]);
+
+        Log::info('Payment status updated', ['payment_id' => $payment->id, 'status' => $request->status]);
 
         ProcessOrder::dispatch($payment->order);
 
