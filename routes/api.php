@@ -6,8 +6,9 @@ use App\Http\Controllers\Seller\ProductsController as SellerProductsController;
 use App\Http\Controllers\Admin\OrdersController as AdminOrdersController;
 use App\Http\Controllers\Buyer\OrdersController as BuyerOrdersController;
 use App\Http\Controllers\Buyer\PaymentController as BuyerPaymentController;
+use App\Http\Controllers\Buyer\ProductController as BuyerProductController;
 use App\Http\Controllers\Seller\OrdersController as SellerOrdersController;
-use App\Http\Controllers\WebhookController;
+use App\Http\Controllers\Buyer\SellerController as BuyerSellerCollection;
 use App\Http\Resources\ProductCollection;
 use App\Http\Resources\SellerCollection;
 use App\Http\Resources\SellerResource;
@@ -15,18 +16,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use App\Models\Product;
-use Illuminate\Support\Facades\Redis;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-
-Route::get('/users', function () {
-    return User::all()->toArray();
+Route::middleware('guest')->group(function () {
+    Route::post('/login', [ApiAuthController::class, 'login']);
+    Route::post('/register', [ApiRegisterController::class, 'store']);
 });
 
-Route::post('/login', [ApiAuthController::class, 'login']);
-Route::post('/register', [ApiRegisterController::class, 'store']);
+Route::get('/logout', [ApiAuthController::class, 'logout'])->middleware('auth:sanctum');
 
 Route::prefix('/admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/orders', [AdminOrdersController::class, 'index']);
@@ -34,9 +30,7 @@ Route::prefix('/admin')->middleware(['auth:sanctum', 'role:admin'])->group(funct
     Route::patch('/orders/{order}/status', [AdminOrdersController::class, 'updateStatus']);
 });
 
-Route::prefix('seller.dashboard')->middleware(['auth:sanctum', 'role:seller'])->group(function () {
-
-    Route::get('/logout', [ApiAuthController::class, 'logout']);
+Route::prefix('/seller.dashboard')->middleware(['auth:sanctum', 'role:seller'])->group(function () {
 
     Route::apiResource('products', SellerProductsController::class);
 
@@ -55,34 +49,15 @@ Route::prefix('/payments')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/', [BuyerPaymentController::class, 'store']);
 });
 
-Route::get('/products', function (Request $request) {
-    return Product::orderByDesc('created_at')->paginate()->toResourceCollection();
-});
-Route::get('/products/{id}', function (string $id) {
-    return Product::find($id)->toResource();
-});
+Route::get('/products', [BuyerProductController::class, 'index']);
+Route::get('/products/{product}', [BuyerProductController::class, 'show']);
 
 Route::prefix('/seller')->group(function () {
-
-    Route::get('/', function () {
-        return new SellerCollection(User::isSeller()->get());
-    });
-
-    Route::get('/{id}', function (string $id) {
-        return new SellerResource(
-            User::isSeller()->findOrFail($id)
-        );
-    });
-
-    Route::get('/{id}/products', function (string $id) {
-        return new ProductCollection(User::isSeller()->findOrFail($id)->products()->orderByDesc('created_at')->paginate());
-    });
-
-    Route::get('/products/{id}', function ($id) {
-        return Product::findOrFail($id)->user;
-    });
+    Route::get('/', [BuyerSellerCollection::class, 'index']);
+    Route::get('/{id}', [BuyerSellerCollection::class, 'show']);
+    Route::get('/{id}/products', [BuyerSellerCollection::class, 'products']);
+    Route::get('/products/{product}', [BuyerSellerCollection::class, 'showProduct']);
 });
 
-Route::prefix('/webhooks')->group(function () {
-    Route::patch('/payment', [WebhookController::class, 'handlePaymentWebhook']);
-});
+require __DIR__ . '/local.php';
+require __DIR__ . '/webhooks.php';

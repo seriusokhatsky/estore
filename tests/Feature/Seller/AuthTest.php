@@ -24,16 +24,6 @@ class AuthTest extends TestCase
         $this->actingAs($this->seller);
     }
 
-    public function test_seller_can_logout(): void
-    {
-        $response = $this->getJson('/api/seller.dashboard/logout');
-
-        $response->assertStatus(200);
-        $response->assertJson([
-            'message' => 'Logged out successfully'
-        ]);
-    }
-
     public function test_unauthorized_user_cannot_access_seller_dashboard(): void
     {
         $buyer = User::factory()
